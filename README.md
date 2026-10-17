@@ -1,6 +1,6 @@
 # System Security Project: Securing a Car Dealership Web App
 
-My Year 1 car dealership web app, rebuilt with a SQL database and security features that address
+My [Year 1 car dealership web app](https://github.com/brandonpxw/App-Development-Project), rebuilt with a SQL database and security features that address
 the OWASP Top 10 web application risks.
 
 **Nanyang Polytechnic · Year 2 · 2022** · [Portfolio page](https://brandonpxw.github.io/portfolioPages/sysecproject.html)
