@@ -36,7 +36,7 @@ import Accessory
 import ElectronicAccessory
 
 app = Flask(__name__)
-app.secret_key = 'any_random_string'
+app.secret_key = os.environ.get('SECRET_KEY') or os.urandom(24)
 
 path = 'static/assets/profiles/'
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -47,14 +47,14 @@ app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
-app.config['MAIL_USERNAME'] = 'appdevresetpw@gmail.com'
-app.config['MAIL_PASSWORD'] = 'ydhqmpownjvqdnxl'
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', '')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', '')
 app.config['RECAPTCHA_ENABLED'] = True
-app.config['RECAPTCHA_PUBLIC_KEY'] = '6LeMOvEgAAAAAParXi1z2tXkTU-kiHHMccbrIhwF'
-app.config['RECAPTCHA_PRIVATE_KEY'] = '6LeMOvEgAAAAACC0zFp7R1SZGTMgUn6Vnoj5h19y'
+app.config['RECAPTCHA_PUBLIC_KEY'] = os.environ.get('RECAPTCHA_PUBLIC_KEY', '')
+app.config['RECAPTCHA_PRIVATE_KEY'] = os.environ.get('RECAPTCHA_PRIVATE_KEY', '')
 app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'mysql'
+app.config['MYSQL_USER'] = os.environ.get('MYSQL_USER', '')
+app.config['MYSQL_PASSWORD'] = os.environ.get('MYSQL_PASSWORD', '')
 app.config['MYSQL_DB'] = 'pythonlogin'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
 
@@ -86,7 +86,7 @@ def is_human(captcha_response):
     # """ Validating recaptcha response from google server
     #     Returns True captcha test passed for submitted form else returns False.
     # """
-    secret = "6LeMOvEgAAAAACC0zFp7R1SZGTMgUn6Vnoj5h19y"
+    secret = app.config['RECAPTCHA_PRIVATE_KEY']
     payload = {'response': captcha_response, 'secret': secret}
     response = requests.post("https://www.google.com/recaptcha/api/siteverify", payload)
     response_text = json.loads(response.text)
@@ -395,7 +395,7 @@ def login(emaildata=None, expirytime=None):
 
                     email = session['email1']
                     token = s.dumps(email, salt="email-confirm")
-                    msg = Message('Email Confirmation', sender='appdevresetpw@gmail.com', recipients=[email])
+                    msg = Message('Email Confirmation', sender=app.config['MAIL_USERNAME'], recipients=[email])
                     link = url_for('confirm_email', token=token, _external=True)
                     msg.body = (f"Click on the link to be redirected. {link}")
                     mail.send(msg)
@@ -631,7 +631,7 @@ def newAdmin():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     register_form = Register(request.form)
-    sitekey = "6LeMOvEgAAAAAParXi1z2tXkTU-kiHHMccbrIhwF"
+    sitekey = app.config['RECAPTCHA_PUBLIC_KEY']
     if request.method == 'POST' and register_form.validate():
         emails = []
         accounts_dict = {}
@@ -712,7 +712,7 @@ def register():
 @app.route('/carregister', methods=['GET', 'POST'])
 def carregister():
     carregister_form = CarRegister(request.form)
-    sitekey = "6LeMOvEgAAAAAParXi1z2tXkTU-kiHHMccbrIhwF"
+    sitekey = app.config['RECAPTCHA_PUBLIC_KEY']
     if request.method == 'POST' and carregister_form.validate():
         emails = []
         accounts_dict = {}
@@ -1135,7 +1135,7 @@ def password():
                 expirytimer = starttime + timedelta(minutes=1)
                 expirytime = expirytimer.strftime('%H:%M:%S')
 
-                msg = Message('Your New Password ', sender='appdevprojectsss@gmail.com', recipients=[forget_password_form.email.data])
+                msg = Message('Your New Password ', sender=app.config['MAIL_USERNAME'], recipients=[forget_password_form.email.data])
                 reset_time = datetime.now()
                 cur = mysql.connection.cursor()
                 cursor.execute('UPDATE twofactor SET reset_time = %s WHERE email = %s', (reset_time, forget_password_form.email.data))
@@ -1201,7 +1201,7 @@ def unlock(id):
     account.set_status(True)
     temporary_password = str(uuid4())[:8]
     account.set_password(temporary_password)
-    msg = Message('Account Unlocked', sender='appdevprojectsss@gmail.com', recipients=[account.get_email()])
+    msg = Message('Account Unlocked', sender=app.config['MAIL_USERNAME'], recipients=[account.get_email()])
     msg.html = render_template('unlockemail.html', temporary_password=temporary_password)
     mail.send(msg)
     session['unlock_success'] = account.get_first_name() + ' ' + account.get_last_name()
